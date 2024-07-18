@@ -469,6 +469,6 @@ mod tests {
         assert_eq!(syllables("ἀετός"), ["ἀ", "ε", "τός"]);
         assert_eq!(syllables("ἀετὸν"), ["ἀ", "ε", "τὸν"]);
         assert_eq!(syllables("ὥσπερ"), ["ὥ", "σπερ"]); // TODO: Is this correct?
-        assert_eq!(syllables("ἔχει"), ["ἔ", "χειz"]);
+        assert_eq!(syllables("ἔχει"), ["ἔ", "χει"]);
     }
 }
