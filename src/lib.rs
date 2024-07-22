@@ -4,16 +4,31 @@ use Breathing::*;
 
 // Split a sequence of unicode Greek characters into syllables.
 // Characters can be accented. Characters can be composed as NFD or NFC.
+#[inline]
 pub fn syllables<'a>(word: &'a str) -> Vec<&'a str> {
     let mut syllables = Vec::<&'a str>::new();
     let mut state = Syllable::Ending;
     let mut end: usize = word.len();
-    let mut last: usize = 0;
+    let mut last: usize = end;
     let mut prev: char = 0 as char;
     let mut prev_prev: char = 0 as char;
     for (i, element) in UnicodeSegmentation::grapheme_indices(word, true).rev() {
         let (c, _, vowel, _, _, diaeresis) = categorise(element);
-        //println!("mode: {:?}, {}", state, c);
+        if c == 0 as char {
+            state = Syllable::Ending;
+            if last == end {
+                syllables.push(&word[i..end]);
+            } else {
+                syllables.push(&word[last..end]);
+                if last > i {
+                    syllables.push(&word[i..last]);
+                }
+            }
+            end = i;
+            last = i;
+            prev = c;
+            continue;
+        }
         match state {
             Syllable::Ending => {
                 // Consume consonants until we consume a vowel.
@@ -48,7 +63,6 @@ pub fn syllables<'a>(word: &'a str) -> Vec<&'a str> {
                     end = i;
                     state = Syllable::Ending;
                 } else if joinable_consonant(c, prev) {
-                    //println!("can join {} {}", c, prev);
                     prev_prev = prev;
                 } else {
                     syllables.push(&word[last..end]);
@@ -77,7 +91,6 @@ enum Syllable {
 
 #[inline]
 fn is_dipthong(a: char, b: char) -> bool {
-    //println!("is dipthong {} {}", a, b);
     match (a, b) {
         ('α', 'ι') => true,
         ('ε', 'ι') => true,
@@ -148,37 +161,32 @@ pub enum Breathing {
 
 #[inline]
 fn categorise(c: &str) -> (char, &'static str, bool, Breathing, Accent, bool) {
-    //    let (a, b, k, d, e) = x_categorise(c);
-    //    println!("{} -> {} {} {} {:?} {:?}", c, a, b, k, d, e);
-    //    (a, b, k, d, e)
-    //}
-    //fn x_categorise(c: &str) -> (char, &'static str, bool, Accent, Accent) {
     match c {
-        "α" => {
+        "Α" | "α" => {
             return ('α', "a", true, None, Unaccented, false);
         }
-        "ε" => {
+        "Ε" | "ε" => {
             return ('ε', "e", true, None, Unaccented, false);
         }
-        "η" => {
+        "Η" | "η" => {
             return ('η', "e", true, None, Unaccented, false);
         }
-        "ι" => {
+        "Ι" | "ι" => {
             return ('ι', "i", true, None, Unaccented, false);
         }
-        "ο" => {
+        "Ο" | "ο" => {
             return ('ο', "o", true, None, Unaccented, false);
         }
-        "υ" => {
+        "Υ" | "υ" => {
             return ('υ', "u", true, None, Unaccented, false);
         }
-        "ω" => {
+        "Ω" | "ω" => {
             return ('ω', "o", true, None, Unaccented, false);
         }
-        "ϋ" => {
+        "Ϋ" | "ϋ" => {
             return ('υ', "υ", true, None, Unaccented, true);
         }
-        "ϊ" => {
+        "Ϊ" | "ϊ" => {
             return ('ι', "i", true, None, Unaccented, true);
         }
         "ᾶ" => {
@@ -193,223 +201,223 @@ fn categorise(c: &str) -> (char, &'static str, bool, Breathing, Accent, bool) {
         "ῶ" => {
             return ('ῶ', "o", true, None, Circumflex, false);
         }
-        "ά" | "α\u{301}" => {
+        "Ά" | "Α\u{301}" | "ά" | "α\u{301}" => {
             return ('α', "a", true, Smooth, Acute, false);
         }
-        "έ" | "ε\u{301}" => {
+        "Έ" | "Ε\u{301}" | "έ" | "ε\u{301}" => {
             return ('ε', "e", true, Smooth, Acute, false);
         }
-        "ή" | "η\u{301}" => {
+        "Ή" | "Η\u{301}" | "ή" | "η\u{301}" => {
             return ('η', "e", true, Smooth, Acute, false);
         }
-        "ί" | "ι\u{301}" => {
+        "Ί" | "Ι\u{301}" | "ί" | "ι\u{301}" => {
             return ('ι', "i", true, Smooth, Acute, false);
         }
-        "ό" | "ο\u{301}" => {
+        "Ό" | "Ο\u{301}" | "ό" | "ο\u{301}" => {
             return ('ο', "o", true, Smooth, Acute, false);
         }
-        "ύ" | "υ\u{301}" => {
+        "Ύ" | "Υ\u{301}" | "ύ" | "υ\u{301}" => {
             return ('υ', "u", true, Smooth, Acute, false);
         }
-        "ώ" | "ω\u{301}" => {
+        "Ώ" | "Ω\u{301}" | "ώ" | "ω\u{301}" => {
             return ('ω', "o", true, Smooth, Acute, false);
         }
-        "ὰ" | "α\u{300}" => {
+        "Ὰ" | "Α\u{300}" | "ὰ" | "α\u{300}" => {
             return ('α', "a", true, Smooth, Grave, false);
         }
-        "ὲ" | "ε\u{300}" => {
+        "Ὲ" | "Ε\u{300}" | "ὲ" | "ε\u{300}" => {
             return ('ε', "e", true, Smooth, Grave, false);
         }
-        "ὴ" | "η\u{300}" => {
+        "Ὴ" | "Η\u{300}" | "ὴ" | "η\u{300}" => {
             return ('η', "e", true, Smooth, Grave, false);
         }
-        "ὶ" | "ι\u{300}" => {
+        "Ὶ" | "Ι\u{300}" | "ὶ" | "ι\u{300}" => {
             return ('ι', "i", true, Smooth, Grave, false);
         }
-        "ὸ" | "ο\u{300}" => {
+        "Ὸ" | "Ο\u{300}" | "ὸ" | "ο\u{300}" => {
             return ('ο', "o", true, Smooth, Grave, false);
         }
-        "ὺ" | "υ\u{300}" => {
+        "Ὺ" | "Υ\u{300}" | "ὺ" | "υ\u{300}" => {
             return ('υ', "u", true, Smooth, Grave, false);
         }
-        "ὼ" | "ω\u{300}" => {
+        "Ὼ" | "Ω\u{300}" | "ὼ" | "ω\u{300}" => {
             return ('ω', "o", true, Smooth, Grave, false);
         }
-        "ἀ" | "α\u{313}" => {
+        "Ἀ" | "Α\u{313}" | "ἀ" | "α\u{313}" => {
             return ('α', "a", true, Smooth, Unaccented, false);
         }
-        "ἐ" | "ε\u{313}" => {
+        "Ἐ" | "Ε\u{313}" | "ἐ" | "ε\u{313}" => {
             return ('ε', "e", true, Smooth, Unaccented, false);
         }
-        "ἠ" | "η\u{313}" => {
+        "Ἠ" | "Η\u{313}" | "ἠ" | "η\u{313}" => {
             return ('η', "e", true, Smooth, Unaccented, false);
         }
-        "ἰ" | "ι\u{313}" => {
+        "Ἰ" | "Ι\u{313}" | "ἰ" | "ι\u{313}" => {
             return ('ι', "i", true, Smooth, Unaccented, false);
         }
-        "ὀ" | "ο\u{313}" => {
+        "Ὀ" | "Ο\u{313}" | "ὀ" | "ο\u{313}" => {
             return ('ο', "o", true, Smooth, Unaccented, false);
         }
-        "ὐ" | "υ\u{313}" => {
+        "Υ\u{313}" | "ὐ" | "υ\u{313}" => {
             return ('υ', "u", true, Smooth, Unaccented, false);
         }
-        "ὠ" | "ω\u{313}" => {
+        "Ὠ" | "Ω\u{313}" | "ὠ" | "ω\u{313}" => {
             return ('ω', "o", true, Smooth, Unaccented, false);
         }
-        "ἁ" => {
+        "Ἁ" | "ἁ" => {
             return ('α', "a", true, Rough, Unaccented, false);
         }
-        "ἑ" => {
+        "Ἑ" | "ἑ" => {
             return ('ε', "e", true, Rough, Unaccented, false);
         }
-        "ἡ" => {
+        "Ἡ" | "ἡ" => {
             return ('η', "e", true, Rough, Unaccented, false);
         }
-        "ἱ" => {
+        "Ἱ" | "ἱ" => {
             return ('ι', "i", true, Rough, Unaccented, false);
         }
-        "ὁ" => {
+        "Ὁ" | "ὁ" => {
             return ('ο', "i", true, Rough, Unaccented, false);
         }
-        "ὑ" => {
+        "Ὑ" | "ὑ" => {
             return ('υ', "u", true, Rough, Unaccented, false);
         }
-        "ὡ" => {
+        "Ὡ" | "ὡ" => {
             return ('ω', "o", true, Rough, Unaccented, false);
         }
-        "ἄ" => {
+        "Ἄ" | "ἄ" => {
             return ('α', "a", true, Smooth, Acute, false);
         }
-        "ἔ" => {
+        "Ἔ" | "ἔ" | "ε\u{313}\u{301}" | "ε\u{301}\u{313}" | "Ε\u{313}\u{301}" | "Ε\u{301}\u{313}" => {
             return ('ε', "e", true, Smooth, Acute, false);
         }
-        "ἤ" => {
+        "Ἤ" | "ἤ" | "η\u{313}\u{301}" | "η\u{301}\u{313}" | "Η\u{313}\u{301}" | "Η\u{301}\u{313}" => {
             return ('η', "e", true, Smooth, Acute, false);
         }
-        "ἴ" => {
+        "Ἴ" | "ἴ" | "ι\u{313}\u{301}" | "ι\u{301}\u{313}" | "Ι\u{313}\u{301}" | "Ι\u{301}\u{313}" => {
             return ('ι', "i", true, Smooth, Acute, false);
         }
-        "ὄ" => {
+        "Ὄ" | "ὄ" | "ο\u{313}\u{301}" | "ο\u{301}\u{313}" | "Ο\u{313}\u{301}" | "Ο\u{301}\u{313}" => {
             return ('ο', "o", true, Smooth, Acute, false);
         }
-        "ὔ" => {
+        "ὔ" | "υ\u{313}\u{301}" | "υ\u{301}\u{313}" => {
             return ('υ', "u", true, Smooth, Acute, false);
         }
-        "ὤ" => {
+        "Ὤ" | "ὤ" | "Ω\u{313}\u{301}" | "Ω\u{301}\u{313}" | "ω\u{313}\u{301}" | "ω\u{301}\u{313}" => {
             return ('ω', "o", true, Smooth, Acute, false);
         }
-        "ἅ" | "α\u{301}\u{314}" | "α\u{314}\u{301}" => {
+        "ἅ" | "α\u{301}\u{314}" | "α\u{314}\u{301}" | "Ἅ" | "Α\u{301}\u{314}" | "Α\u{314}\u{301}" => {
             return ('α', "a", true, Rough, Acute, false);
         }
-        "ἕ" | "ε\u{301}\u{314}" | "ε\u{314}\u{301}" => {
+        "ἕ" | "ε\u{301}\u{314}" | "ε\u{314}\u{301}" | "Ἕ" | "Ε\u{301}\u{314}" | "Ε\u{314}\u{301}" => {
             return ('ε', "e", true, Rough, Acute, false);
         }
-        "ἥ" | "η\u{301}\u{314}" | "η\u{314}\u{301}" => {
+        "ἥ" | "η\u{301}\u{314}" | "η\u{314}\u{301}" | "Ἥ" | "Η\u{301}\u{314}" | "Η\u{314}\u{301}" => {
             return ('η', "e", true, Rough, Acute, false);
         }
-        "ἵ" | "ι\u{301}\u{314}" | "ι\u{314}\u{301}" => {
+        "ἵ" | "ι\u{301}\u{314}" | "ι\u{314}\u{301}" | "Ἵ" | "Ι\u{301}\u{314}" | "Ι\u{314}\u{301}" => {
             return ('ι', "i", true, Rough, Acute, false);
         }
-        "ὅ" | "ο\u{301}\u{314}" | "ο\u{314}\u{301}" => {
+        "ὅ" | "ο\u{301}\u{314}" | "ο\u{314}\u{301}" | "Ὅ" | "Ο\u{301}\u{314}" | "Ο\u{314}\u{301}" => {
             return ('ο', "o", true, Rough, Acute, false);
         }
-        "ὕ" | "υ\u{301}\u{314}" | "υ\u{314}\u{301}" => {
+        "ὕ" | "υ\u{301}\u{314}" | "υ\u{314}\u{301}" | "Ὕ" | "Υ\u{301}\u{314}" | "Υ\u{314}\u{301}" => {
             return ('υ', "u", true, Rough, Acute, false);
         }
-        "ὥ" | "ω\u{301}\u{314}" | "ω\u{314}\u{301}" => {
+        "ὥ" | "ω\u{301}\u{314}" | "ω\u{314}\u{301}" | "Ὥ" | "Ω\u{301}\u{314}" | "Ω\u{314}\u{301}" => {
             return ('ω', "o", true, Rough, Acute, false);
         }
-        "ἂ" => {
+        "Ἂ" | "ἂ" => {
             return ('α', "a", true, Smooth, Grave, false);
         }
-        "ἒ" => {
+        "Ἒ" | "ἒ" => {
             return ('ε', "e", true, Smooth, Grave, false);
         }
-        "ἢ" => {
+        "Ἢ" | "ἢ" => {
             return ('η', "e", true, Smooth, Grave, false);
         }
-        "ἲ" => {
+        "Ἲ" | "ἲ" => {
             return ('ι', "i", true, Smooth, Grave, false);
         }
-        "ὂ" => {
+        "Ὂ" | "ὂ" => {
             return ('ο', "o", true, Smooth, Grave, false);
         }
         "ὒ" => {
             return ('υ', "u", true, Smooth, Grave, false);
         }
-        "ὢ" => {
+        "Ὢ" | "ὢ" => {
             return ('ω', "o", true, Smooth, Grave, false);
         }
-        "ἃ" => {
+        "Ἃ" | "ἃ" => {
             return ('α', "a", true, Rough, Grave, false);
         }
-        "ἓ" => {
+        "Ἓ" | "ἓ" => {
             return ('ε', "e", true, Rough, Grave, false);
         }
-        "ἣ" => {
+        "Ἣ" | "ἣ" => {
             return ('η', "e", true, Rough, Grave, false);
         }
-        "ἳ" => {
+        "Ἳ" | "ἳ" => {
             return ('ι', "i", true, Rough, Grave, false);
         }
-        "ὃ" => {
+        "Ὃ" | "ὃ" => {
             return ('ο', "o", true, Rough, Grave, false);
         }
-        "ὓ" => {
+        "Ὓ" | "ὓ" => {
             return ('υ', "u", true, Rough, Grave, false);
         }
-        "ὣ" => {
+        "Ὣ" | "ὣ" => {
             return ('ω', "o", true, Rough, Grave, false);
         }
-        "β" => {
+        "Β" | "β" => {
             return ('β', "b", false, None, Unaccented, false);
         }
-        "γ" => {
+        "Γ" | "γ" => {
             return ('γ', "g", false, None, Unaccented, false);
         }
-        "δ" => {
+        "Δ" | "δ" => {
             return ('δ', "d", false, None, Unaccented, false);
         }
-        "ζ" => {
+        "Ζ" | "ζ" => {
             return ('ζ', "z", false, None, Unaccented, false);
         }
-        "θ" => {
+        "Θ" | "θ" => {
             return ('θ', "th", false, None, Unaccented, false);
         }
-        "κ" => {
+        "Κ" | "κ" => {
             return ('κ', "k", false, None, Unaccented, false);
         }
-        "λ" => {
+        "Λ" | "λ" => {
             return ('λ', "l", false, None, Unaccented, false);
         }
-        "μ" => {
+        "Μ" | "μ" => {
             return ('μ', "m", false, None, Unaccented, false);
         }
-        "ν" => {
+        "Ν" | "ν" => {
             return ('ν', "n", false, None, Unaccented, false);
         }
-        "ξ" => {
+        "Ξ" | "ξ" => {
             return ('ξ', "x", false, None, Unaccented, false);
         }
-        "π" => {
+        "Π" | "π" => {
             return ('π', "p", false, None, Unaccented, false);
         }
-        "ρ" => {
+        "Ρ" | "ρ" => {
             return ('ρ', "r", false, None, Unaccented, false);
         }
-        "σ" => {
+        "Σ" | "σ" | "ς" => {
             return ('σ', "s", false, None, Unaccented, false);
         }
-        "τ" => {
+        "Τ" | "τ" => {
             return ('τ', "t", false, None, Unaccented, false);
         }
-        "φ" => {
+        "Φ" | "φ" => {
             return ('φ', "f", false, None, Unaccented, false);
         }
-        "χ" => {
+        "Χ" | "χ" => {
             return ('χ', "ch", false, None, Unaccented, false);
         }
-        "ψ" => {
+        "Ψ" | "ψ" => {
             return ('ψ', "ps", false, None, Unaccented, false);
         }
         _ => (0 as char, "", false, None, Unaccented, false),
@@ -443,6 +451,22 @@ mod tests {
         assert_eq!(vowel, true);
         assert_eq!(breathing, Smooth);
         assert_eq!(accent, Acute);
+
+        let (gc, c, vowel, breathing, accent, _) = categorise("Β");
+        assert_eq!(c, "b");
+        assert_eq!(gc, 'β');
+        assert_eq!(vowel, false);
+        assert_eq!(breathing, None);
+        assert_eq!(accent, Unaccented);
+    }
+
+    #[test]
+    fn test_invalid_characters() {
+        // Invalid ascii found
+        assert_eq!(syllables("σaσ"), ["σ", "a", "σ"]);
+        assert_eq!(syllables("eχει"), ["e", "χει"]);
+        assert_eq!(syllables("ἔχεi"), ["ἔ", "χε", "i"]);
+        assert_eq!(syllables("ἔχeι"), ["ἔχ", "e", "ι"]);
     }
 
     #[test]
@@ -454,6 +478,7 @@ mod tests {
         assert_eq!(syllables("ἄμα"), ["ἄ", "μα"]);
         assert_eq!(syllables("ἀλά"), ["ἀ", "λά"]);
         assert_eq!(syllables("ἀλὰ"), ["ἀ", "λὰ"]);
+        assert_eq!(syllables("ἈΛΆ"), ["Ἀ", "ΛΆ"]);
         assert_eq!(syllables("χριστος"), ["χρι", "στος"]);
         assert_eq!(syllables("χρίστος"), ["χρί", "στος"]);
         assert_eq!(syllables("περιπα"), ["πε", "ρι", "πα"]);
@@ -464,6 +489,13 @@ mod tests {
         assert_eq!(syllables("φυω"), ["φυ", "ω"]);
         assert_eq!(syllables("σσσ"), ["σσσ"]);
         assert_eq!(syllables("μωϋσῆν"), ["μω", "ϋ", "σῆν"]);
+        assert_eq!(syllables("ὄσπριον"), ["ὄ", "σπρι", "ον"]);
+        assert_eq!(syllables("ὁσία"), ["ὁ", "σί", "α"]);
+        assert_eq!(syllables("ὅτου"), ["ὅ", "του"]);
+        assert_eq!(syllables("ἥτις"), ["ἥ", "τις"]);
+        assert_eq!(syllables("αἵτινες"), ["αἵ", "τι", "νες"]);
+        assert_eq!(syllables("οἵτινες"), ["οἵ", "τι", "νες"]);
+        assert_eq!(syllables("περιεπατήσαμεν"), ["πε", "ρι", "ε", "πα", "τή", "σα", "μεν"]);
 
         // NFD
         assert_eq!(syllables("ἀετός"), ["ἀ", "ε", "τός"]);
