@@ -1,4 +1,4 @@
-## greekg-syllables
+## greek-syllables
 
 This is an experimental Zero copy Ancient Greek word syllabification library.
 
