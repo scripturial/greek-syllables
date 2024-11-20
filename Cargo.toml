@@ -1,7 +1,14 @@
 [package]
-name = "greek-accents"
+name = "greek-syllables"
 version = "0.1.0"
 edition = "2021"
+description = "Zero copy Ancient Greek word syllabification."
+authors = ["Jay Rhoden <hello@scripturial.com>"]
+license = "MIT"
+repository = "https://github.com/scripturial/greek-syllables"
+readme = "README.md"
+keywords = ["syllables", "biblical-greek", "ancient-greek", "linguistics"]
+categories = ["parsing"]
 
 [dependencies]
 unicode-segmentation = "1.11.0"
