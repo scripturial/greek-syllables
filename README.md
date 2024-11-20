@@ -2,7 +2,7 @@
 
 This is an experimental Zero copy Ancient Greek word syllabification library.
 
-    use greeksyllables::syllables;
+    use greek-syllables::syllables;
     let syllables = syllables("στρατιοτης"); // ["στρα", "τι", "ο", "της"]
 
 Each syllable has the lifetime of the input string provded. 
