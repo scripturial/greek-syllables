@@ -1,6 +1,6 @@
 [package]
 name = "greek-syllables"
-version = "0.1.2"
+version = "0.1.4"
 edition = "2021"
 description = "Zero copy Ancient Greek word syllabification."
 authors = ["Jay Rhoden <hello@scripturial.com>"]

@@ -52,8 +52,8 @@ pub fn syllables<'a>(word: &'a str) -> Vec<&'a str> {
                 }
             }
             Syllable::Restarting => {
-                // Probably start of a new syllable, but some
-                // consonance can be squshed on to the start.
+                // Probably start of a new syllable, but some consonant
+                // clusters have special rules for splitting.
                 if vowel {
                     syllables.push(&word[last..end]);
                     end = last;
